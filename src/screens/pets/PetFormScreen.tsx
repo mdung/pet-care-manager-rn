@@ -217,6 +217,104 @@ export const PetFormScreen: React.FC = () => {
           )}
         />
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Additional Information</Text>
+
+          <Controller
+            control={control}
+            name="microchipNumber"
+            render={({ field: { onChange, value } }) => (
+              <TextInputField
+                label="Microchip Number"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Enter microchip number"
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="registrationNumber"
+            render={({ field: { onChange, value } }) => (
+              <TextInputField
+                label="Registration Number"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Enter registration number"
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="insuranceId"
+            render={({ field: { onChange, value } }) => (
+              <TextInputField
+                label="Insurance ID"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Link to insurance record"
+              />
+            )}
+          />
+
+          <Text style={styles.subsectionTitle}>Emergency Contact</Text>
+
+          <Controller
+            control={control}
+            name="emergencyContactName"
+            render={({ field: { onChange, value } }) => (
+              <TextInputField
+                label="Contact Name"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Emergency contact name"
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="emergencyContactPhone"
+            render={({ field: { onChange, value } }) => (
+              <TextInputField
+                label="Contact Phone"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Phone number"
+                keyboardType="phone-pad"
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="emergencyContactRelationship"
+            render={({ field: { onChange, value } }) => (
+              <TextInputField
+                label="Relationship"
+                value={value}
+                onChangeText={onChange}
+                placeholder="e.g., Owner, Family"
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="preferredVetId"
+            render={({ field: { onChange, value } }) => (
+              <TextInputField
+                label="Preferred Vet ID"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Link to preferred vet"
+              />
+            )}
+          />
+        </View>
+
         <Button
           title={petId ? 'Update Pet' : 'Add Pet'}
           onPress={handleSubmit(onSubmit)}
