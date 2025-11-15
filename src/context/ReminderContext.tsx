@@ -35,8 +35,10 @@ export const ReminderProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   const addReminder = async (reminderData: Omit<Reminder, 'id' | 'notificationId' | 'createdAt' | 'updatedAt'>) => {
-    // Schedule notification
-    const notificationId = await notificationService.scheduleReminder(reminderData as Reminder);
+    // Schedule notification - use recurring for weekly/monthly
+    const notificationId = reminderData.repeat === 'weekly' || reminderData.repeat === 'monthly'
+      ? await notificationService.scheduleRecurringReminder(reminderData as Reminder)
+      : await notificationService.scheduleReminder(reminderData as Reminder);
 
     const newReminder: Reminder = {
       ...reminderData,
@@ -58,9 +60,11 @@ export const ReminderProvider: React.FC<{ children: ReactNode }> = ({ children }
       await notificationService.cancelNotification(existingReminder.notificationId);
     }
 
-    // Schedule new notification if date/time changed
+    // Schedule new notification if date/time changed - use recurring for weekly/monthly
     const updatedReminderData = { ...existingReminder, ...reminderData };
-    const notificationId = await notificationService.scheduleReminder(updatedReminderData);
+    const notificationId = updatedReminderData.repeat === 'weekly' || updatedReminderData.repeat === 'monthly'
+      ? await notificationService.scheduleRecurringReminder(updatedReminderData)
+      : await notificationService.scheduleReminder(updatedReminderData);
 
     const updatedReminder: Reminder = {
       ...existingReminder,

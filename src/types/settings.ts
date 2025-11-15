@@ -10,5 +10,10 @@ export interface Settings {
   highContrast?: boolean;
   autoBackup?: boolean;
   autoBackupFrequency?: 'daily' | 'weekly' | 'monthly';
+  // Advanced notifications
+  quietHoursEnabled?: boolean;
+  quietHoursStart?: string; // HH:mm format
+  quietHoursEnd?: string; // HH:mm format
+  notificationGrouping?: boolean;
 }
 

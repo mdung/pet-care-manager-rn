@@ -26,6 +26,13 @@ const schema = yup.object().shape({
   dateOfBirth: yup.string().required('Date of birth is required'),
   sex: yup.string().required('Sex is required'),
   notes: yup.string(),
+  microchipNumber: yup.string(),
+  registrationNumber: yup.string(),
+  insuranceId: yup.string(),
+  emergencyContactName: yup.string(),
+  emergencyContactPhone: yup.string(),
+  emergencyContactRelationship: yup.string(),
+  preferredVetId: yup.string(),
 });
 
 export const PetFormScreen: React.FC = () => {
@@ -54,6 +61,13 @@ export const PetFormScreen: React.FC = () => {
         : dayjs().subtract(1, 'year').format('YYYY-MM-DD'),
       sex: existingPet?.sex || 'unknown',
       notes: existingPet?.notes || '',
+      microchipNumber: existingPet?.microchipNumber || '',
+      registrationNumber: existingPet?.registrationNumber || '',
+      insuranceId: existingPet?.insuranceId || '',
+      emergencyContactName: existingPet?.emergencyContact?.name || '',
+      emergencyContactPhone: existingPet?.emergencyContact?.phone || '',
+      emergencyContactRelationship: existingPet?.emergencyContact?.relationship || '',
+      preferredVetId: existingPet?.preferredVetId || '',
     },
   });
 
@@ -253,6 +267,20 @@ const styles = StyleSheet.create({
   },
   optionTextSelected: {
     color: '#fff',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginTop: 16,
+    marginBottom: 8,
   },
   submitButton: {
     marginTop: 8,

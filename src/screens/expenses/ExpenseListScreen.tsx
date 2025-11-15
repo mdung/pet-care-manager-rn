@@ -308,6 +308,12 @@ export const ExpenseListScreen: React.FC = () => {
               >
                 <Text style={styles.statsButtonText}>📊 Stats</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ExpenseSummary' as never)}
+                style={styles.summaryButton}
+              >
+                <Text style={styles.summaryButtonText}>📈 Summary</Text>
+              </TouchableOpacity>
             </View>
             <Button
               title="+ Add Expense"
@@ -507,6 +513,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statsButtonText: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '600',
+  },
+  summaryButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#E5E5EA',
+    borderRadius: 8,
+  },
+  summaryButtonText: {
     fontSize: 14,
     color: '#000',
     fontWeight: '600',

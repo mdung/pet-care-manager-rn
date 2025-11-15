@@ -216,6 +216,58 @@ export const SettingsScreen: React.FC = () => {
         </Card>
 
         <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Notifications</Text>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Quiet Hours</Text>
+              <Text style={styles.settingDescription}>
+                Set times when notifications are silenced
+              </Text>
+            </View>
+            <Switch
+              value={settings.quietHoursEnabled || false}
+              onValueChange={(value) => updateSettings({ quietHoursEnabled: value } as any)}
+              trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          {settings.quietHoursEnabled && (
+            <View style={styles.settingRow}>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="Start (HH:mm)"
+                value={settings.quietHoursStart || ''}
+                onChangeText={(text) => updateSettings({ quietHoursStart: text } as any)}
+              />
+              <Text style={styles.timeSeparator}>-</Text>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="End (HH:mm)"
+                value={settings.quietHoursEnd || ''}
+                onChangeText={(text) => updateSettings({ quietHoursEnd: text } as any)}
+              />
+            </View>
+          )}
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Notification Grouping</Text>
+              <Text style={styles.settingDescription}>
+                Group notifications by category
+              </Text>
+            </View>
+            <Switch
+              value={settings.notificationGrouping || false}
+              onValueChange={(value) => updateSettings({ notificationGrouping: value } as any)}
+              trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
+              thumbColor="#fff"
+            />
+          </View>
+        </Card>
+
+        <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Backup & Restore</Text>
           
           <Button
@@ -388,6 +440,21 @@ const styles = StyleSheet.create({
   },
   languageButtonTextSelected: {
     color: '#fff',
+  },
+  timeInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    backgroundColor: '#fff',
+  },
+  timeSeparator: {
+    marginHorizontal: 8,
+    fontSize: 16,
+    color: '#666',
   },
   backupButton: {
     marginBottom: 12,

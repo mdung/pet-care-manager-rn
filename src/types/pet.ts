@@ -10,6 +10,16 @@ export interface Pet {
   sex: PetSex;
   avatarUri?: string;
   notes?: string;
+  // Additional fields
+  microchipNumber?: string;
+  registrationNumber?: string;
+  insuranceId?: string; // Link to insurance record
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship?: string;
+  };
+  preferredVetId?: string; // Link to vet record
   createdAt: string;
   updatedAt: string;
 }
