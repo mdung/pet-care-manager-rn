@@ -155,6 +155,17 @@ export const PetDetailScreen: React.FC = () => {
 
       <Card style={styles.section}>
         <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Weight Tracking</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('WeightTracking' as never, { petId: pet.id } as never)}
+          >
+            <Text style={styles.seeAll}>View</Text>
+          </TouchableOpacity>
+        </View>
+      </Card>
+
+      <Card style={styles.section}>
+        <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Upcoming Reminders</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('ReminderList' as never, { petId: pet.id } as never)}

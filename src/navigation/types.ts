@@ -10,6 +10,10 @@ export type RootStackParamList = {
   ReminderForm: { reminderId?: string; petId?: string };
   ExpenseForm: { expenseId?: string; petId?: string };
   ExpenseSummary: undefined;
+  Export: undefined;
+  WeightTracking: { petId: string };
+  WeightForm: { weightId?: string; petId: string };
+  HealthDashboard: undefined;
 };
 
 export type BottomTabParamList = {

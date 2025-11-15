@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { usePets } from '@/hooks/usePets';
@@ -16,9 +17,44 @@ import { Button } from '@/components/Button';
 import { Pet } from '@/types/pet';
 import { getAge as getAgeFromDOB } from '@/services/dates/dateUtils';
 
+type SortOption = 'name' | 'age' | 'species';
+
 export const PetListScreen: React.FC = () => {
   const navigation = useNavigation();
   const { pets, loading, deletePet } = usePets();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('name');
+
+  const filteredAndSortedPets = useMemo(() => {
+    let filtered = pets;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        pet =>
+          pet.name.toLowerCase().includes(query) ||
+          pet.breed?.toLowerCase().includes(query) ||
+          pet.species.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'age':
+          return new Date(a.dateOfBirth).getTime() - new Date(b.dateOfBirth).getTime();
+        case 'species':
+          return a.species.localeCompare(b.species);
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [pets, searchQuery, sortBy]);
 
   const handleDelete = (pet: Pet) => {
     Alert.alert(
@@ -77,7 +113,18 @@ export const PetListScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <View style={styles.loadingContainer}>
+          {[1, 2, 3].map(i => (
+            <View key={i} style={styles.skeletonCard}>
+              <View style={styles.skeletonAvatar} />
+              <View style={styles.skeletonContent}>
+                <View style={styles.skeletonLine} />
+                <View style={[styles.skeletonLine, { width: '60%' }]} />
+                <View style={[styles.skeletonLine, { width: '40%' }]} />
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
@@ -97,11 +144,43 @@ export const PetListScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search pets by name, breed, or species..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        <View style={styles.sortContainer}>
+          <Text style={styles.sortLabel}>Sort by:</Text>
+          {(['name', 'age', 'species'] as SortOption[]).map(option => (
+            <TouchableOpacity
+              key={option}
+              style={[styles.sortButton, sortBy === option && styles.sortButtonActive]}
+              onPress={() => setSortBy(option)}
+            >
+              <Text
+                style={[
+                  styles.sortButtonText,
+                  sortBy === option && styles.sortButtonTextActive,
+                ]}
+              >
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
       <FlatList
-        data={pets}
+        data={filteredAndSortedPets}
         renderItem={renderPetCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No pets found matching your search</Text>
+          </View>
+        }
       />
       <TouchableOpacity
         style={styles.fab}
@@ -197,6 +276,87 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  searchContainer: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    marginBottom: 12,
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  sortLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+    color: '#000',
+  },
+  sortButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#E5E5EA',
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  sortButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  sortButtonText: {
+    fontSize: 12,
+    color: '#000',
+  },
+  sortButtonTextActive: {
+    color: '#fff',
+  },
+  emptyContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  loadingContainer: {
+    padding: 16,
+  },
+  skeletonCard: {
+    flexDirection: 'row',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  skeletonAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#E5E5EA',
+    marginRight: 12,
+  },
+  skeletonContent: {
+    flex: 1,
+  },
+  skeletonLine: {
+    height: 16,
+    backgroundColor: '#E5E5EA',
+    borderRadius: 4,
+    marginBottom: 8,
+    width: '80%',
   },
 });
 

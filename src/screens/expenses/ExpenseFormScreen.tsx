@@ -1,16 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   TouchableOpacity,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import Toast from 'react-native-toast-message';
 import { useExpenses } from '@/hooks/useExpenses';
 import { usePets } from '@/hooks/usePets';
 import { useSettings } from '@/hooks/useSettings';
@@ -29,6 +31,7 @@ const schema = yup.object().shape({
   date: yup.string().required('Date is required'),
   description: yup.string(),
   vendor: yup.string(),
+  petId: yup.string().required('Pet selection is required'),
 });
 
 export const ExpenseFormScreen: React.FC = () => {
@@ -38,9 +41,10 @@ export const ExpenseFormScreen: React.FC = () => {
   const { expenses, addExpense, updateExpense } = useExpenses();
   const { pets } = usePets();
   const { settings } = useSettings();
+  const [showPetPicker, setShowPetPicker] = useState(false);
 
   const existingExpense = expenseId ? expenses.find(e => e.id === expenseId) : undefined;
-  const selectedPet = petId ? pets.find(p => p.id === petId) : undefined;
+  const initialPetId = petId || existingExpense?.petId || '';
 
   const {
     control,
@@ -51,6 +55,7 @@ export const ExpenseFormScreen: React.FC = () => {
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
+      petId: initialPetId,
       category: existingExpense?.category || 'other',
       amount: existingExpense?.amount || 0,
       date: existingExpense?.date
@@ -62,16 +67,13 @@ export const ExpenseFormScreen: React.FC = () => {
   });
 
   const selectedCategory = watch('category');
+  const selectedPetId = watch('petId');
+  const selectedPet = pets.find(p => p.id === selectedPetId);
 
   const onSubmit = async (data: any) => {
-    if (!petId && !existingExpense?.petId) {
-      Alert.alert('Error', 'Please select a pet');
-      return;
-    }
-
     try {
       const expenseData = {
-        petId: petId || existingExpense!.petId,
+        petId: data.petId,
         category: data.category as ExpenseCategory,
         amount: parseFloat(data.amount),
         date: dayjs(data.date).toISOString(),
@@ -81,25 +83,96 @@ export const ExpenseFormScreen: React.FC = () => {
 
       if (expenseId) {
         await updateExpense(expenseId, expenseData);
-        Alert.alert('Success', 'Expense updated successfully');
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Expense updated successfully',
+        });
       } else {
         await addExpense(expenseData);
-        Alert.alert('Success', 'Expense added successfully');
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Expense added successfully',
+        });
       }
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Error', 'Failed to save expense');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to save expense',
+      });
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {selectedPet && (
-          <View style={styles.petInfo}>
-            <Text style={styles.petInfoText}>Pet: {selectedPet.name}</Text>
-          </View>
-        )}
+    <>
+      <ScrollView style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.section}>
+            <Text style={styles.label}>Pet *</Text>
+          <TouchableOpacity
+            style={[styles.petSelector, errors.petId && styles.petSelectorError]}
+            onPress={() => setShowPetPicker(true)}
+          >
+            <Text style={[styles.petSelectorText, !selectedPet && styles.petSelectorPlaceholder]}>
+              {selectedPet ? selectedPet.name : 'Select a pet'}
+            </Text>
+            <Text style={styles.petSelectorArrow}>▼</Text>
+          </TouchableOpacity>
+          {errors.petId && (
+            <Text style={styles.errorText}>{errors.petId.message}</Text>
+          )}
+          <Controller
+            control={control}
+            name="petId"
+            render={({ field: { onChange } }) => (
+              <Modal
+                visible={showPetPicker}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowPetPicker(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>Select Pet</Text>
+                      <TouchableOpacity onPress={() => setShowPetPicker(false)}>
+                        <Text style={styles.modalClose}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <FlatList
+                      data={pets}
+                      keyExtractor={item => item.id}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          style={[
+                            styles.petOption,
+                            selectedPetId === item.id && styles.petOptionSelected,
+                          ]}
+                          onPress={() => {
+                            onChange(item.id);
+                            setShowPetPicker(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.petOptionText,
+                              selectedPetId === item.id && styles.petOptionTextSelected,
+                            ]}
+                          >
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            )}
+          />
+        </View>
 
         <View style={styles.section}>
           <Text style={styles.label}>Category *</Text>
@@ -190,6 +263,7 @@ export const ExpenseFormScreen: React.FC = () => {
         />
       </View>
     </ScrollView>
+    </>
   );
 };
 
@@ -248,6 +322,81 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 8,
     marginBottom: 32,
+  },
+  petSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+  },
+  petSelectorError: {
+    borderColor: '#FF3B30',
+  },
+  petSelectorText: {
+    fontSize: 16,
+    color: '#000',
+    flex: 1,
+  },
+  petSelectorPlaceholder: {
+    color: '#999',
+  },
+  petSelectorArrow: {
+    fontSize: 12,
+    color: '#666',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#666',
+  },
+  petOption: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  petOptionSelected: {
+    backgroundColor: '#E3F2FD',
+  },
+  petOptionText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  petOptionTextSelected: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
 

@@ -18,6 +18,8 @@ import { Expense } from '@/types/expense';
 import { formatDate, formatCurrency } from '@/utils/formatters';
 import { EXPENSE_CATEGORIES } from '@/utils/constants';
 
+type SortOption = 'date' | 'amount' | 'category';
+
 export const ExpenseListScreen: React.FC = () => {
   const navigation = useNavigation();
   const { expenses, deleteExpense } = useExpenses();
@@ -25,17 +27,58 @@ export const ExpenseListScreen: React.FC = () => {
   const { settings } = useSettings();
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('date');
+  const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>({});
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const filteredExpenses = useMemo(() => {
     let filtered = expenses;
+    
+    // Apply pet filter
     if (selectedPetId) {
       filtered = filtered.filter(e => e.petId === selectedPetId);
     }
+    
+    // Apply category filter
     if (selectedCategory) {
       filtered = filtered.filter(e => e.category === selectedCategory);
     }
-    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [expenses, selectedPetId, selectedCategory]);
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        e =>
+          e.description?.toLowerCase().includes(query) ||
+          e.vendor?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply date range filter
+    if (dateRange.start) {
+      filtered = filtered.filter(e => new Date(e.date) >= new Date(dateRange.start!));
+    }
+    if (dateRange.end) {
+      filtered = filtered.filter(e => new Date(e.date) <= new Date(dateRange.end!));
+    }
+    
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'date':
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case 'amount':
+          return b.amount - a.amount;
+        case 'category':
+          return a.category.localeCompare(b.category);
+        default:
+          return 0;
+      }
+    });
+    
+    return sorted;
+  }, [expenses, selectedPetId, selectedCategory, searchQuery, sortBy, dateRange]);
 
   const totalAmount = useMemo(() => {
     return filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -106,6 +149,12 @@ export const ExpenseListScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.filters}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by description or vendor..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
         <View style={styles.filterRow}>
           <Text style={styles.filterLabel}>Filter by Pet:</Text>
           <TouchableOpacity
@@ -163,13 +212,77 @@ export const ExpenseListScreen: React.FC = () => {
             </TouchableOpacity>
           ))}
         </View>
+        <View style={styles.sortRow}>
+          <Text style={styles.sortLabel}>Sort by:</Text>
+          {(['date', 'amount', 'category'] as SortOption[]).map(option => (
+            <TouchableOpacity
+              key={option}
+              style={[styles.sortButton, sortBy === option && styles.sortButtonActive]}
+              onPress={() => setSortBy(option)}
+            >
+              <Text
+                style={[
+                  styles.sortButtonText,
+                  sortBy === option && styles.sortButtonTextActive,
+                ]}
+              >
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.dateRangeRow}>
+          <Text style={styles.dateRangeLabel}>Date Range:</Text>
+          <TouchableOpacity
+            style={styles.dateRangeButton}
+            onPress={() => setShowDatePicker(!showDatePicker)}
+          >
+            <Text style={styles.dateRangeButtonText}>
+              {dateRange.start || dateRange.end
+                ? `${dateRange.start || 'Start'} - ${dateRange.end || 'End'}`
+                : 'All Dates'}
+            </Text>
+          </TouchableOpacity>
+          {(dateRange.start || dateRange.end) && (
+            <TouchableOpacity
+              style={styles.clearDateButton}
+              onPress={() => setDateRange({})}
+            >
+              <Text style={styles.clearDateButtonText}>Clear</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {showDatePicker && (
+          <View style={styles.datePickerContainer}>
+            <TextInput
+              style={styles.dateInput}
+              placeholder="Start Date (YYYY-MM-DD)"
+              value={dateRange.start || ''}
+              onChangeText={text => setDateRange({ ...dateRange, start: text })}
+            />
+            <TextInput
+              style={styles.dateInput}
+              placeholder="End Date (YYYY-MM-DD)"
+              value={dateRange.end || ''}
+              onChangeText={text => setDateRange({ ...dateRange, end: text })}
+            />
+          </View>
+        )}
       </View>
 
       <View style={styles.summary}>
-        <Text style={styles.summaryLabel}>Total:</Text>
-        <Text style={styles.summaryAmount}>
-          {formatCurrency(totalAmount, settings.defaultCurrency)}
-        </Text>
+        <View style={styles.summaryLeft}>
+          <Text style={styles.summaryLabel}>Total:</Text>
+          <Text style={styles.summaryAmount}>
+            {formatCurrency(totalAmount, settings.defaultCurrency)}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.summaryButton}
+          onPress={() => navigation.navigate('ExpenseSummary' as never)}
+        >
+          <Text style={styles.summaryButtonText}>View Summary</Text>
+        </TouchableOpacity>
       </View>
 
       {filteredExpenses.length === 0 ? (
@@ -242,6 +355,90 @@ const styles = StyleSheet.create({
   filterButtonTextActive: {
     color: '#fff',
   },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    marginBottom: 12,
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 12,
+  },
+  sortLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+    color: '#000',
+  },
+  sortButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#E5E5EA',
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  sortButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  sortButtonText: {
+    fontSize: 12,
+    color: '#000',
+  },
+  sortButtonTextActive: {
+    color: '#fff',
+  },
+  dateRangeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    flexWrap: 'wrap',
+  },
+  dateRangeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+    color: '#000',
+  },
+  dateRangeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#E5E5EA',
+    marginRight: 8,
+  },
+  dateRangeButtonText: {
+    fontSize: 12,
+    color: '#000',
+  },
+  clearDateButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  clearDateButtonText: {
+    fontSize: 12,
+    color: '#FF3B30',
+  },
+  datePickerContainer: {
+    marginTop: 8,
+    gap: 8,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    backgroundColor: '#fff',
+  },
   summary: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -250,6 +447,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
+  },
+  summaryLeft: {
+    flex: 1,
   },
   summaryLabel: {
     fontSize: 18,
@@ -260,6 +460,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#007AFF',
+  },
+  summaryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+    marginLeft: 16,
+  },
+  summaryButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   list: {
     padding: 16,

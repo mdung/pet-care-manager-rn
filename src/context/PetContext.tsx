@@ -59,8 +59,36 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deletePet = async (id: string) => {
-    await petStorage.delete(id);
-    await refreshPets();
+    // Cascade delete: remove all related vaccines, reminders, and expenses
+    const { vaccineStorage } = require('@/services/storage/vaccineStorage');
+    const { reminderStorage } = require('@/services/storage/reminderStorage');
+    const { expenseStorage } = require('@/services/storage/expenseStorage');
+    const { notificationService } = require('@/services/notifications/notificationService');
+
+    try {
+      // Get all related data before deletion
+      const vaccines = await vaccineStorage.getByPetId(id);
+      const reminders = await reminderStorage.getByPetId(id);
+
+      // Cancel all notifications for reminders
+      for (const reminder of reminders) {
+        if (reminder.notificationId) {
+          await notificationService.cancelNotification(reminder.notificationId);
+        }
+      }
+
+      // Delete all related data
+      await vaccineStorage.deleteByPetId(id);
+      await reminderStorage.deleteByPetId(id);
+      await expenseStorage.deleteByPetId(id);
+      
+      // Finally, delete the pet
+      await petStorage.delete(id);
+      await refreshPets();
+    } catch (error) {
+      console.error('Error deleting pet with cascade:', error);
+      throw error;
+    }
   };
 
   const getPetById = (id: string) => {

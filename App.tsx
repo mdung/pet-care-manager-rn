@@ -1,11 +1,15 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { PetProvider } from '@/context/PetContext';
 import { VaccineProvider } from '@/context/VaccineContext';
 import { ReminderProvider } from '@/context/ReminderContext';
 import { ExpenseProvider } from '@/context/ExpenseContext';
 import { SettingsProvider } from '@/context/SettingsContext';
+import { WeightProvider } from '@/context/WeightContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { seedData } from '@/utils/seedData';
 
@@ -33,20 +37,27 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <SettingsProvider>
-        <PetProvider>
-          <VaccineProvider>
-            <ReminderProvider>
-              <ExpenseProvider>
-                <RootNavigator />
-                <StatusBar style="auto" />
-              </ExpenseProvider>
-            </ReminderProvider>
-          </VaccineProvider>
-        </PetProvider>
-      </SettingsProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <SettingsProvider>
+            <PetProvider>
+              <VaccineProvider>
+                <ReminderProvider>
+                  <ExpenseProvider>
+                    <WeightProvider>
+                      <RootNavigator />
+                      <StatusBar style="auto" />
+                    </WeightProvider>
+                  </ExpenseProvider>
+                </ReminderProvider>
+              </VaccineProvider>
+            </PetProvider>
+          </SettingsProvider>
+          <Toast />
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

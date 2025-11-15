@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PetListScreen } from '@/screens/pets/PetListScreen';
 import { ExpenseListScreen } from '@/screens/expenses/ExpenseListScreen';
 import { SettingsScreen } from '@/screens/settings/SettingsScreen';
+import { HealthDashboardScreen } from '@/screens/health/HealthDashboardScreen';
 import { Text } from 'react-native';
 import { BottomTabParamList } from './types';
 
@@ -28,6 +29,14 @@ export const BottomTabNavigator: React.FC = () => {
         options={{
           title: 'My Pets',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🐾</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Health"
+        component={HealthDashboardScreen}
+        options={{
+          title: 'Health',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏥</Text>,
         }}
       />
       <Tab.Screen

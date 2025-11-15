@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useVaccines } from '@/hooks/useVaccines';
@@ -21,14 +22,33 @@ import { getDaysUntil } from '@/services/dates/dateUtils';
 export const VaccineListScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { petId } = (route.params as { petId: string }) || {};
+  const { petId } = (route.params as { petId?: string }) || {};
   const { vaccines, deleteVaccine } = useVaccines();
   const { getPetById } = usePets();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<VaccineStatus | 'all'>('all');
 
   const pet = petId ? getPetById(petId) : undefined;
   const petVaccines = useMemo(() => {
     return petId ? vaccines.filter(v => v.petId === petId) : vaccines;
   }, [vaccines, petId]);
+
+  const filteredVaccines = useMemo(() => {
+    let filtered = petVaccines;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(v => v.name.toLowerCase().includes(query));
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(v => v.status === statusFilter);
+    }
+
+    return filtered;
+  }, [petVaccines, searchQuery, statusFilter]);
 
   const groupedVaccines = useMemo(() => {
     const grouped: Record<VaccineStatus, Vaccine[]> = {
@@ -36,11 +56,11 @@ export const VaccineListScreen: React.FC = () => {
       upcoming: [],
       completed: [],
     };
-    petVaccines.forEach(v => {
+    filteredVaccines.forEach(v => {
       grouped[v.status].push(v);
     });
     return grouped;
-  }, [petVaccines]);
+  }, [filteredVaccines]);
 
   const handleDelete = (vaccine: Vaccine) => {
     Alert.alert(
@@ -138,18 +158,55 @@ export const VaccineListScreen: React.FC = () => {
         renderItem={({ item }) => renderVaccine(item)}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No vaccines found</Text>
+          </View>
+        }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.headerText}>
-              {pet ? `${pet.name}'s Vaccines` : 'All Vaccines'}
-            </Text>
-            <Button
-              title="+ Add Vaccine"
-              onPress={() =>
-                navigation.navigate('VaccineForm' as never, { petId: petId || '' } as never)
-              }
-              style={styles.addButton}
-            />
+          <View>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>
+                {pet ? `${pet.name}'s Vaccines` : 'All Vaccines'}
+              </Text>
+              <Button
+                title="+ Add Vaccine"
+                onPress={() =>
+                  navigation.navigate('VaccineForm' as never, { petId: petId || '' } as never)
+                }
+                style={styles.addButton}
+              />
+            </View>
+            <View style={styles.filterContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by vaccine name..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              <View style={styles.filterRow}>
+                <Text style={styles.filterLabel}>Status:</Text>
+                {(['all', 'overdue', 'upcoming', 'completed'] as const).map(status => (
+                  <TouchableOpacity
+                    key={status}
+                    style={[
+                      styles.filterButton,
+                      statusFilter === status && styles.filterButtonActive,
+                    ]}
+                    onPress={() => setStatusFilter(status)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterButtonText,
+                        statusFilter === status && styles.filterButtonTextActive,
+                      ]}
+                    >
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </View>
         }
       />
@@ -225,6 +282,59 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontSize: 14,
     fontWeight: '600',
+  },
+  filterContainer: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    marginBottom: 12,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+    color: '#000',
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#E5E5EA',
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  filterButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  filterButtonText: {
+    fontSize: 12,
+    color: '#000',
+  },
+  filterButtonTextActive: {
+    color: '#fff',
+  },
+  emptyContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
   },
 });
 

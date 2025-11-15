@@ -9,6 +9,7 @@ import { useExpenses } from '@/hooks/useExpenses';
 import { usePets } from '@/hooks/usePets';
 import { useSettings } from '@/hooks/useSettings';
 import { Card } from '@/components/Card';
+import { ExpenseCharts } from '@/components/ExpenseCharts';
 import { formatCurrency } from '@/utils/formatters';
 import { EXPENSE_CATEGORIES } from '@/utils/constants';
 import dayjs from 'dayjs';
@@ -51,6 +52,7 @@ export const ExpenseSummaryScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container}>
+      <ExpenseCharts expenses={expenses} currency={settings.defaultCurrency} />
       <View style={styles.content}>
         <Card style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Summary</Text>
