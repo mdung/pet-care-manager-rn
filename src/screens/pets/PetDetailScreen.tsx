@@ -13,12 +13,15 @@ import { usePets } from '@/hooks/usePets';
 import { useVaccines } from '@/hooks/useVaccines';
 import { useReminders } from '@/hooks/useReminders';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useSettings } from '@/hooks/useSettings';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { getAge } from '@/services/dates/dateUtils';
 import { formatDate } from '@/utils/formatters';
 import { VaccineStatus } from '@/types/vaccine';
+import { shareService } from '@/services/sharing/shareService';
+import Toast from 'react-native-toast-message';
 
 export const PetDetailScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -28,6 +31,9 @@ export const PetDetailScreen: React.FC = () => {
   const { getVaccinesByPetId } = useVaccines();
   const { getRemindersByPetId } = useReminders();
   const { getExpensesByPetId } = useExpenses();
+  const { settings } = useSettings();
+  const { vaccines } = useVaccines();
+  const { expenses } = useExpenses();
 
   const pet = petId ? getPetById(petId) : undefined;
 
@@ -95,6 +101,27 @@ export const PetDetailScreen: React.FC = () => {
           style={styles.actionButton}
         />
         <Button
+          title="Share Profile"
+          onPress={async () => {
+            try {
+              await shareService.sharePetProfile(pet, vaccines, expenses);
+              Toast.show({
+                type: 'success',
+                text1: 'Success',
+                text2: 'Pet profile shared',
+              });
+            } catch (error) {
+              Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Failed to share profile',
+              });
+            }
+          }}
+          variant="secondary"
+          style={styles.actionButton}
+        />
+        <Button
           title="Delete Pet"
           onPress={handleDelete}
           variant="danger"
@@ -127,15 +154,38 @@ export const PetDetailScreen: React.FC = () => {
         )}
       </Card>
 
-      <Card style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Vaccines</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('VaccineList' as never, { petId: pet.id } as never)}
-          >
-            <Text style={styles.seeAll}>See All</Text>
-          </TouchableOpacity>
-        </View>
+        <Card style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Vaccines</Text>
+            <View style={styles.sectionHeaderActions}>
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    await shareService.shareVaccineRecords(pet, vaccines);
+                    Toast.show({
+                      type: 'success',
+                      text1: 'Success',
+                      text2: 'Vaccine records shared',
+                    });
+                  } catch (error) {
+                    Toast.show({
+                      type: 'error',
+                      text1: 'Error',
+                      text2: 'Failed to share records',
+                    });
+                  }
+                }}
+                style={styles.shareButton}
+              >
+                <Text style={styles.shareButtonText}>Share</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('VaccineList' as never, { petId: pet.id } as never)}
+              >
+                <Text style={styles.seeAll}>See All</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         {vaccines.length === 0 ? (
           <Text style={styles.emptyText}>No vaccines recorded</Text>
         ) : (
@@ -160,6 +210,28 @@ export const PetDetailScreen: React.FC = () => {
             onPress={() => navigation.navigate('WeightTracking' as never, { petId: pet.id } as never)}
           >
             <Text style={styles.seeAll}>View</Text>
+          </TouchableOpacity>
+        </View>
+      </Card>
+
+      <Card style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Grooming</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('GroomingList' as never, { petId: pet.id } as never)}
+          >
+            <Text style={styles.seeAll}>View History</Text>
+          </TouchableOpacity>
+        </View>
+      </Card>
+
+      <Card style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Activity Log</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ActivityLog' as never, { petId: pet.id } as never)}
+          >
+            <Text style={styles.seeAll}>View Log</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -261,6 +333,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  sectionHeaderActions: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  shareButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  shareButtonText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 18,

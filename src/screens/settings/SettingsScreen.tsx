@@ -17,6 +17,8 @@ import { Currency } from '@/types/settings';
 import { ThemeMode } from '@/types/theme';
 import { CURRENCY_SYMBOLS } from '@/utils/constants';
 import { backupService } from '@/services/backup/backupService';
+import { useI18n } from '@/context/I18nContext';
+import { Language } from '@/types/i18n';
 import Toast from 'react-native-toast-message';
 
 const CURRENCIES: Currency[] = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD'];
@@ -25,6 +27,7 @@ export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
   const { settings, updateSettings } = useSettings();
   const { theme, isDark, setThemeMode } = useTheme();
+  const { language, setLanguage: setI18nLanguage } = useI18n();
 
   const handleCurrencyChange = (currency: Currency) => {
     updateSettings({ defaultCurrency: currency });
@@ -59,6 +62,40 @@ export const SettingsScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Language</Text>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>App Language</Text>
+              <Text style={styles.settingDescription}>
+                Choose your preferred language
+              </Text>
+            </View>
+            <View style={styles.languageOptions}>
+              {(['en', 'es', 'fr'] as Language[]).map(lang => (
+                <TouchableOpacity
+                  key={lang}
+                  style={[
+                    styles.languageButton,
+                    language === lang && styles.languageButtonSelected,
+                  ]}
+                  onPress={() => setI18nLanguage(lang)}
+                >
+                  <Text
+                    style={[
+                      styles.languageButtonText,
+                      language === lang && styles.languageButtonTextSelected,
+                    ]}
+                  >
+                    {lang === 'en' ? 'English' : lang === 'es' ? 'Español' : 'Français'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </Card>
+
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Appearance</Text>
 
@@ -326,6 +363,30 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   themeButtonTextSelected: {
+    color: '#fff',
+  },
+  languageOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  languageButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#fff',
+  },
+  languageButtonSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  languageButtonText: {
+    fontSize: 14,
+    color: '#000',
+  },
+  languageButtonTextSelected: {
     color: '#fff',
   },
   backupButton: {

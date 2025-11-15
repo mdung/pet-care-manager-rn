@@ -300,14 +300,22 @@ export const ExpenseListScreen: React.FC = () => {
           contentContainerStyle={styles.list}
           ListHeaderComponent={
             <View style={styles.header}>
+            <View style={styles.headerLeft}>
               <Text style={styles.headerText}>Expenses</Text>
-              <Button
-                title="+ Add Expense"
-                onPress={() => navigation.navigate('ExpenseForm' as never, {} as never)}
-                style={styles.addButton}
-              />
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Statistics' as never)}
+                style={styles.statsButton}
+              >
+                <Text style={styles.statsButtonText}>📊 Stats</Text>
+              </TouchableOpacity>
             </View>
-          }
+            <Button
+              title="+ Add Expense"
+              onPress={() => navigation.navigate('ExpenseForm' as never, {} as never)}
+              style={styles.addButton}
+            />
+          </View>
+        }
         />
       )}
     </View>
@@ -482,10 +490,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#000',
+  },
+  statsButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#E5E5EA',
+    borderRadius: 8,
+  },
+  statsButtonText: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '600',
   },
   addButton: {
     paddingHorizontal: 16,

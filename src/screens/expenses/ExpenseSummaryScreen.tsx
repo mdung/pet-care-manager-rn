@@ -10,14 +10,45 @@ import { usePets } from '@/hooks/usePets';
 import { useSettings } from '@/hooks/useSettings';
 import { Card } from '@/components/Card';
 import { ExpenseCharts } from '@/components/ExpenseCharts';
+import { Button } from '@/components/Button';
 import { formatCurrency } from '@/utils/formatters';
 import { EXPENSE_CATEGORIES } from '@/utils/constants';
+import { shareService } from '@/services/sharing/shareService';
+import Toast from 'react-native-toast-message';
 import dayjs from 'dayjs';
 
 export const ExpenseSummaryScreen: React.FC = () => {
   const { expenses } = useExpenses();
   const { pets } = usePets();
   const { settings } = useSettings();
+
+  const handleShareReport = async () => {
+    try {
+      // Share overall expense report
+      let reportText = `💰 Overall Expense Report\n\n`;
+      reportText += `Total Spent: ${formatCurrency(
+        expenses.reduce((sum, e) => sum + e.amount, 0),
+        settings.defaultCurrency
+      )}\n`;
+      reportText += `Total Expenses: ${expenses.length}\n\n`;
+      
+      const isAvailable = await require('expo-sharing').Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await require('expo-sharing').Sharing.shareAsync(reportText as any);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Expense report shared',
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to share report',
+      });
+    }
+  };
 
   const currentMonth = dayjs().format('YYYY-MM');
   const currentYear = dayjs().format('YYYY');
@@ -54,6 +85,14 @@ export const ExpenseSummaryScreen: React.FC = () => {
     <ScrollView style={styles.container}>
       <ExpenseCharts expenses={expenses} currency={settings.defaultCurrency} />
       <View style={styles.content}>
+        <View style={styles.shareButtonContainer}>
+          <Button
+            title="Share Expense Report"
+            onPress={handleShareReport}
+            variant="secondary"
+            style={styles.shareButton}
+          />
+        </View>
         <Card style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Summary</Text>
           <View style={styles.summaryRow}>
@@ -202,6 +241,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#007AFF',
+  },
+  shareButtonContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  shareButton: {
+    marginBottom: 16,
   },
 });
 

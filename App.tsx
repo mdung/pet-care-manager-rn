@@ -9,6 +9,7 @@ import { ExpenseProvider } from '@/context/ExpenseContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { WeightProvider } from '@/context/WeightContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { I18nProvider } from '@/context/I18nContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { seedData } from '@/utils/seedData';
@@ -38,8 +39,9 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <SafeAreaProvider>
+      <I18nProvider>
+        <ThemeProvider>
+          <SafeAreaProvider>
           <SettingsProvider>
             <PetProvider>
               <VaccineProvider>
@@ -57,6 +59,7 @@ export default function App() {
           <Toast />
         </SafeAreaProvider>
       </ThemeProvider>
+      </I18nProvider>
     </ErrorBoundary>
   );
 }

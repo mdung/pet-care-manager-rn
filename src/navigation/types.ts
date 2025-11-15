@@ -14,6 +14,11 @@ export type RootStackParamList = {
   WeightTracking: { petId: string };
   WeightForm: { weightId?: string; petId: string };
   HealthDashboard: undefined;
+  Statistics: undefined;
+  GroomingList: { petId?: string };
+  GroomingForm: { groomingId?: string; petId: string };
+  ActivityLog: { petId?: string };
+  ActivityForm: { activityId?: string; petId: string };
 };
 
 export type BottomTabParamList = {

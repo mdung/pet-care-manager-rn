@@ -13,6 +13,9 @@ import { ExpenseSummaryScreen } from '@/screens/expenses/ExpenseSummaryScreen';
 import { ExportScreen } from '@/screens/expenses/ExportScreen';
 import { WeightTrackingScreen } from '@/screens/pets/WeightTrackingScreen';
 import { HealthDashboardScreen } from '@/screens/health/HealthDashboardScreen';
+import { StatisticsScreen } from '@/screens/statistics/StatisticsScreen';
+import { GroomingListScreen } from '@/screens/grooming/GroomingListScreen';
+import { ActivityLogScreen } from '@/screens/activities/ActivityLogScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -90,6 +93,21 @@ export const RootNavigator: React.FC = () => {
           name="HealthDashboard"
           component={HealthDashboardScreen}
           options={{ title: 'Health Dashboard' }}
+        />
+        <Stack.Screen
+          name="Statistics"
+          component={StatisticsScreen}
+          options={{ title: 'Statistics & Insights' }}
+        />
+        <Stack.Screen
+          name="GroomingList"
+          component={GroomingListScreen}
+          options={{ title: 'Grooming History' }}
+        />
+        <Stack.Screen
+          name="ActivityLog"
+          component={ActivityLogScreen}
+          options={{ title: 'Activity Log' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
